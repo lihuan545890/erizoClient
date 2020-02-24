@@ -1,0 +1,59 @@
+1. boost
+
+a. copy files inside folder of "boost_patch_for_boringssl" into "boost_1_61_0"
+b. # .\bootstrap.bat
+c. # bjam.exe install --prefix="<your boost install folder>" --with-system --with-date_time --with-random link=static runtime-link=static threading=multi
+
+2. socket.io.cpp
+
+a. # cmake -DOPENSSL_ROOT_DIR="D:\Joshua_workspace\openssl" -DBOOST_ROOT:STRING="D:\Joshua_workspace\boost_install" -DBOOST_VER:STRING=1.61.0 ./
+
+b. open socket.io-client-cpp solution and then configure it with compile "multi-thread static" option
+
+c. fix conflict between socket.io-client-cpp and VS2015
+http://stackoverflow.com/questions/32969289/error-in-websocketpp-library-and-boost-in-windows-visual-studio-2015
+Add Macro "#define _WEBSOCKETPP_NOEXCEPT_" in "socket.io-client-cpp\lib\websocketpp\websocketpp\common\cpp11.hpp"
+
+d. delete openssl folder and create a fake folder named "openssl" and copy include folder of boringssl into it
+
+e. fix three errors caused by conflict between boringssl and wincrypt.h
+Add the following contents in "openssl(boringssl)\include\openssl\base.h"
+
+#ifdef X509_NAME
+#undef X509_NAME
+#endif
+
+#ifdef X509_CERT_PAIR
+#undef X509_CERT_PAIR
+#endif
+
+Add the following contents in "openssl(boringssl)\include\openssl\x509.h"
+
+#ifdef X509_EXTENSIONS
+#undef X509_EXTENSIONS
+#endif
+
+f. fix one error in websocketpp in order to use boost compatible with boringssl
+"socket.io-client-cpp\lib\websocketpp\websocketpp\transport\asio\security\tls.hpp"
+
+    lib::error_code translate_ec(boost::system::error_code ec) {
+        if (ec.category() == boost::asio::ssl::error::get_stream_category()) {
+            if (ec == boost::asio::ssl::error::stream_truncated) {
+                return make_error_code(transport::error::tls_short_read);
+            }
+            else {
+                // We know it is a TLS related error, but otherwise don't know
+                // more. Pass through as TLS generic.
+                return make_error_code(transport::error::tls_error);
+            }
+        }
+        else if (ec.category() == boost::asio::error::get_ssl_category()) {
+            // We know it is a TLS related error, but otherwise don't know
+            // more. Pass through as TLS generic.
+            return make_error_code(transport::error::tls_error);
+        } else {
+            // We don't know any more information about this error so pass
+            // through
+            return make_error_code(transport::error::pass_through);
+        }
+    }

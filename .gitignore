@@ -1,0 +1,12 @@
+/Debug/
+/Release/
+erizoClient.VC.db
+erizoClient.VC.VC.opendb
+erizoClient/Debug/
+erizoClient/Release/
+erizoClient/erizoClient.vcxproj.user
+test/Debug/
+test/Release/
+test/test.vcxproj.user
+test/*.log
+test/erizoClient.lock
